@@ -21,13 +21,10 @@
       - python3
       - python3-pip
       - python-is-python3
-      - nodejs
-      - npm
       - docker.io
       - fd-find
     dev_packages_mac:
       - python
-      - node
       - docker
       - fd
 
@@ -149,6 +146,25 @@
               echo $history[1]
           end
           abbr -a !! --position anywhere --function last_history_item
+
+    - name: Install nvm.sh
+      shell: curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash
+      environment:
+        PROFILE: "{{ ansible_env.HOME }}/.bashrc"
+      args:
+        creates: ~/.nvm/nvm.sh
+
+    - name: Install nvm.fish
+      shell: fisher install jorgebucaran/nvm.fish
+      args:
+        executable: fish
+        creates: ~/.config/fish/functions/nvm.sh
+
+    - name: Install node and npm
+      shell: . ~/.nvm/nvm.sh && nvm install --lts
+      args:
+        executable: bash
+        creates: ~/.nvm/versions/node/
 
     - name: Git config core.editor
       community.general.git_config:
