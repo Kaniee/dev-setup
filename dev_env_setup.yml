@@ -1,0 +1,217 @@
+---
+- name: Set up a basic development environment
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  vars:
+    the_user: "{{ ansible_user_id }}"
+    dev_packages_common:
+      - git
+      - curl
+      - htop
+      - fish
+      - gh
+      - pipx
+      - jq
+      - bat
+      - ripgrep
+      - fzf
+      - git-delta
+    dev_packages_linux:
+      - python3
+      - python3-pip
+      - python-is-python3
+      - nodejs
+      - npm
+      - docker.io
+      - fd-find
+    dev_packages_mac:
+      - python
+      - node
+      - docker
+      - fd
+
+  tasks:
+    - name: Ensure Homebrew is installed (macOS only)
+      when: ansible_os_family == "Darwin"
+      shell: |
+        which brew || /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+      args:
+        executable: /bin/bash
+
+    - name: Install common packages on Linux
+      when: ansible_os_family == "Debian"
+      become: true
+      package:
+        name: "{{ dev_packages_common + dev_packages_linux }}"
+        state: present
+
+    - name: Install packages on macOS using Homebrew
+      when: ansible_os_family == "Darwin"
+      homebrew:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ dev_packages_common + dev_packages_mac }}"
+
+    - name: Add user to docker group (Linux only)
+      when: ansible_os_family == "Debian"
+      become: true
+      user:
+        name: "{{ the_user }}"
+        groups: docker
+        append: yes
+
+    - name: Ensure Docker is running (macOS only)
+      when: ansible_os_family == "Darwin"
+      shell: |
+        open --background -a Docker && while ! docker system info > /dev/null 2>&1; do sleep 1; done
+
+    - name: Set up bat symlink (Ubuntu only)
+      when: ansible_os_family == "Debian"
+      shell: ln -s /usr/bin/batcat ~/.local/bin/bat
+      args:
+        chdir: ~/.local/bin
+        creates: ~/.local/bin/bat
+
+    - name: Set up fd symlink (Ubuntu only)
+      when: ansible_os_family == "Debian"
+      shell: ln -s /usr/bin/fdfind ~/.local/bin/fd
+      args:
+        chdir: ~/.local/bin
+        creates: ~/.local/bin/fd
+
+    - name: Set fish as default shell
+      become: true
+      user:
+        name: "{{ the_user }}"
+        shell: /usr/bin/fish
+
+    - name: Install poetry
+      community.general.pipx:
+        name: poetry
+
+    - name: Install uv
+      community.general.pipx:
+        name: uv
+
+    - name: Add poetry completions in fish
+      shell: poetry completions fish > poetry.fish
+      args:
+        chdir: ~/.config/fish/completions
+        creates: poetry.fish
+
+    - name: Add docker completions in fish
+      shell: docker completion fish > docker.fish
+      args:
+        chdir: ~/.config/fish/completions
+        creates: docker.fish
+
+    - name: Add docker completions in fish
+      shell: echo 'uv generate-shell-completion fish | source' > uv.fish
+      args:
+        chdir: ~/.config/fish/completions
+        creates: uv.fish
+
+    - name: Install Oh My Fish
+      shell: |
+        curl https://raw.githubusercontent.com/oh-my-fish/oh-my-fish/master/bin/install > omf-install.fish
+        fish omf-install.fish --noninteractive --yes
+        rm omf-install.fish
+      args:
+        chdir: /tmp
+        creates: ~/.local/share/omf
+
+    - name: Install bobthefish
+      shell: fish -c "omf install bobthefish"
+
+    - name: Fish config
+      blockinfile:
+        path: ~/.config/fish/config.fish
+        block: |
+          set -g theme_nerd_fonts yes
+          set -g theme_date_timezone Europe/Berlin
+
+          abbr gf "git fetch"
+          abbr gc "git commit"
+          abbr ga "git add -p"
+          abbr gp "git push"
+          abbr gs "git switch"
+          abbr gl "git pull"
+          abbr untar "tar -xvf"
+
+          function last_history_item
+              echo $history[1]
+          end
+          abbr -a !! --position anywhere --function last_history_item
+
+    - name: Git config core.editor
+      community.general.git_config:
+        scope: global
+        name: core.editor
+        value: code --wait
+
+    - name: Git config core.pager
+      community.general.git_config:
+        scope: global
+        name: core.pager
+        value: delta
+
+    - name: Git config interactive.diffFilter
+      community.general.git_config:
+        scope: global
+        name: interactive.diffFilter
+        value: delta --color-only
+
+    - name: Git config delta.navigate
+      community.general.git_config:
+        scope: global
+        name: delta.navigate
+        value: true
+
+    - name: Git config delta.dark
+      community.general.git_config:
+        scope: global
+        name: delta.dark
+        value: true
+
+    - name: Git config merge.conflictstyle
+      community.general.git_config:
+        scope: global
+        name: merge.conflictstyle
+        value: zdiff3
+
+    - name: Git config push.autoSetupRemote
+      community.general.git_config:
+        scope: global
+        name: push.autoSetupRemote
+        value: true
+
+    - name: Git config alias.lg
+      community.general.git_config:
+        scope: global
+        name: alias.lg
+        value: log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)'
+
+    - name: Git config pull.rebase
+      community.general.git_config:
+        scope: global
+        name: pull.rebase
+        value: true
+
+    - name: Git config advice.skippedCherryPicks
+      community.general.git_config:
+        scope: global
+        name: advice.skippedCherryPicks
+        value: false
+
+    - name: Git config init.defaultBranch
+      community.general.git_config:
+        scope: global
+        name: init.defaultBranch
+        value: main
+
+    - name: Git config commit.gpgsign
+      community.general.git_config:
+        scope: global
+        name: commit.gpgsign
+        value: true
