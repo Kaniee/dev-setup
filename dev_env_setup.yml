@@ -210,6 +210,12 @@
         name: init.defaultBranch
         value: main
 
+    - name: Git config gpg.format
+      community.general.git_config:
+        scope: global
+        name: gpg.format
+        value: ssh
+
     - name: Git config commit.gpgsign
       community.general.git_config:
         scope: global
