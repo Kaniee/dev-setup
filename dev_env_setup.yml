@@ -12,6 +12,7 @@
       - fish
       - gh
       - pipx
+      - unzip
       - jq
       - bat
       - ripgrep
@@ -147,24 +148,26 @@
           end
           abbr -a !! --position anywhere --function last_history_item
 
-    - name: Install nvm.sh
-      shell: curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash
-      environment:
-        PROFILE: "{{ ansible_env.HOME }}/.bashrc"
+    - name: Install fnm
+      shell: curl -fsSL https://fnm.vercel.app/install | bash
       args:
-        creates: ~/.nvm/nvm.sh
+        creates: ~/.local/share/fnm/fnm
 
-    - name: Install nvm.fish
-      shell: fisher install jorgebucaran/nvm.fish
+    - name: Add fnm completions
+      shell: fnm completions --shell fish > fnm.fish
       args:
-        executable: fish
-        creates: ~/.config/fish/functions/nvm.sh
+        chdir: ~/.config/fish/completions
+        creates: fnm.fish
+
+    - name: Add fnm cd-completions
+      lineinfile:
+        path: ~/.config/fish/conf.d/fnm.fish
+        line: fnm env --use-on-cd --shell fish | source
 
     - name: Install node and npm
-      shell: . ~/.nvm/nvm.sh && nvm install --lts
+      shell: fnm install --lts
       args:
-        executable: bash
-        creates: ~/.nvm/versions/node/
+        creates: ~/.local/share/fnm/node-versions/
 
     - name: Git config core.editor
       community.general.git_config:
