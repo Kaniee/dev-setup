@@ -112,17 +112,23 @@
         chdir: ~/.config/fish/completions
         creates: uv.fish
 
-    - name: Install Oh My Fish
-      shell: |
-        curl https://raw.githubusercontent.com/oh-my-fish/oh-my-fish/master/bin/install > omf-install.fish
-        fish omf-install.fish --noninteractive --yes
-        rm omf-install.fish
+    - name: Install fisher
+      shell: curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher
       args:
-        chdir: /tmp
-        creates: ~/.local/share/omf
+        executable: fish
+        creates: ~/.config/fish/functions/fisher.fish
+
+    - name: Get fisher plugins
+      shell: fisher list
+      args:
+        executable: fish
+      register: fisher_plugins
 
     - name: Install bobthefish
-      shell: fish -c "omf install bobthefish"
+      shell: fisher install oh-my-fish/theme-bobthefish
+      args:
+        executable: fish
+      when: fisher_plugins.stdout.find('bobthefish') == -1
 
     - name: Fish config
       blockinfile:
