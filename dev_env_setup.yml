@@ -78,11 +78,21 @@
         chdir: ~/.local/bin
         creates: ~/.local/bin/fd
 
+    - name: Ensure ~/.local/bin in path (bash)
+      lineinfile:
+        path: ~/.bashrc
+        line: export PATH="$PATH:{{ ansible_env.HOME }}/.local/bin"
+
     - name: Set fish as default shell
       become: true
       user:
         name: "{{ the_user }}"
         shell: /usr/bin/fish
+
+    - name: Ensure ~/.local/bin in path (fish)
+      lineinfile:
+        path: ~/.config/fish/config.fish
+        line: set PATH $PATH {{ ansible_env.HOME }}/.local/bin
 
     - name: Install poetry
       community.general.pipx:
