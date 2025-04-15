@@ -22,6 +22,7 @@
       - python3
       - python3-pip
       - python-is-python3
+      - python3-poetry
       - docker.io
       - fd-find
     dev_packages_mac:
@@ -63,6 +64,13 @@
       when: ansible_os_family == "Darwin"
       shell: |
         open --background -a Docker && while ! docker system info > /dev/null 2>&1; do sleep 1; done
+
+    - name: Ensure ~/.local/bin directory exists
+      when: ansible_os_family == "Debian"
+      file:
+        path: ~/.local/bin
+        state: directory
+        mode: '0755'
 
     - name: Set up bat symlink (Ubuntu only)
       when: ansible_os_family == "Debian"
