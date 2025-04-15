@@ -131,6 +131,7 @@
       args:
         executable: fish
       register: fisher_plugins
+      changed_when: false
 
     - name: Install bobthefish
       shell: fisher install oh-my-fish/theme-bobthefish
