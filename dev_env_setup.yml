@@ -254,6 +254,12 @@
         name: init.defaultBranch
         value: main
 
+    - name: Git config push.useForceIfIncludes
+      community.general.git_config:
+        scope: global
+        name: push.useForceIfIncludes
+        value: true
+
     - name: Git config gpg.format
       community.general.git_config:
         scope: global
