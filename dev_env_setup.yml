@@ -28,14 +28,17 @@
       - openjdk-17-demo
       - openjdk-17-doc
       - openjdk-17-jre-headless
-      - openjdk-17-source 
+      - openjdk-17-source
       - docker.io
       - fd-find
     dev_packages_mac:
       - python
       - openjdk@17
-      - docker
+      - docker # Just docker CLI, no runtime
+      - colima # Alternative to Docker Desktop due to licensing issues
       - fd
+      - fnm
+      - font-fira-code-nerd-font
 
   tasks:
     - name: Ensure Homebrew is installed (macOS only)
@@ -52,14 +55,19 @@
         name: "{{ dev_packages_common + dev_packages_linux }}"
         state: present
 
-    - name: Install packages on macOS using Homebrew
+    - name: Install packages on macOS
       when: ansible_os_family == "Darwin"
       homebrew:
-        name: "{{ item }}"
+        name: "{{ dev_packages_common + dev_packages_mac }}"
         state: present
-      loop: "{{ dev_packages_common + dev_packages_mac }}"
 
-    - name: Add user to docker group (Linux only)
+    - name: Install fnm (Debian only)
+      when: ansible_os_family == "Debian"
+      shell: curl -fsSL https://fnm.vercel.app/install | bash
+      args:
+        creates: ~/.local/share/fnm/fnm
+
+    - name: Add user to docker group (Debian only)
       when: ansible_os_family == "Debian"
       become: true
       user:
@@ -67,26 +75,28 @@
         groups: docker
         append: yes
 
-    - name: Ensure Docker is running (macOS only)
+    - name: Start colima (macOS only)
       when: ansible_os_family == "Darwin"
-      shell: |
-        open --background -a Docker && while ! docker system info > /dev/null 2>&1; do sleep 1; done
+      community.general.homebrew_services:
+        name: colima
+        state: present
 
-    - name: Set up bat symlink (Ubuntu only)
+    - name: Set up bat symlink (Debian only)
       when: ansible_os_family == "Debian"
       shell: ln -s /usr/bin/batcat ~/.local/bin/bat
       args:
         chdir: ~/.local/bin
         creates: ~/.local/bin/bat
 
-    - name: Set up fd symlink (Ubuntu only)
+    - name: Set up fd symlink (Debian only)
       when: ansible_os_family == "Debian"
       shell: ln -s /usr/bin/fdfind ~/.local/bin/fd
       args:
         chdir: ~/.local/bin
         creates: ~/.local/bin/fd
 
-    - name: Ensure ~/.local/bin in path (bash)
+    - name: Ensure ~/.local/bin in path (Debian only)
+      when: ansible_os_family == "Debian"
       lineinfile:
         path: ~/.bashrc
         line: export PATH="$PATH:{{ ansible_env.HOME }}/.local/bin"
@@ -95,19 +105,39 @@
       become: true
       user:
         name: "{{ the_user }}"
-        shell: /usr/bin/fish
+        shell: "{{ lookup('pipe', 'which fish') }}"
 
-    - name: Ensure ~/.local/bin in path (fish)
+    - name: Intialize fish config
+      shell: fish -c 'echo "fish is installed"'
+      args:
+        executable: fish
+        creates: ~/.config/fish/config.fish
+
+    - name: Ensure ~/.local/bin in fish path (Debian only)
+      when: ansible_os_family == "Debian"
       lineinfile:
         path: ~/.config/fish/config.fish
         line: set PATH $PATH {{ ansible_env.HOME }}/.local/bin
 
+    - name: Add brew config to fish
+      when: ansible_os_family == "Darwin"
+      lineinfile:
+        create: true
+        path: ~/.config/fish/conf.d/brew.fish
+        line: /opt/homebrew/bin/brew shellenv | source
+
+    - name: Ensure pipx is initialized
+      shell: |
+        pipx ensurepath
+
     - name: Install poetry
       community.general.pipx:
+        executable: pipx
         name: poetry
 
     - name: Install uv
       community.general.pipx:
+        executable: pipx
         name: uv
 
     - name: Add poetry completions in fish
@@ -167,11 +197,6 @@
           end
           abbr -a !! --position anywhere --function last_history_item
 
-    - name: Install fnm
-      shell: curl -fsSL https://fnm.vercel.app/install | bash
-      args:
-        creates: ~/.local/share/fnm/fnm
-
     - name: Add fnm completions
       shell: fnm completions --shell fish > fnm.fish
       args:
@@ -180,10 +205,11 @@
 
     - name: Add fnm cd-completions
       lineinfile:
+        create: true
         path: ~/.config/fish/conf.d/fnm.fish
         line: fnm env --use-on-cd --shell fish | source
 
-    - name: Install node and npm
+    - name: Install node and npm LTS
       shell: fnm install --lts
       args:
         creates: ~/.local/share/fnm/node-versions/
