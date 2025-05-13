@@ -42,6 +42,12 @@ git config --global user.signingkey ~/.ssh/id_ed25519.pub
 
 ## Set up git user
 ```bash
-git config --global user.name ""
-git config --global user.email ""
+git config --file ~/git/work/.gitconfig user.name "work name"
+git config --file ~/git/work/.gitconfig user.email "work email"
 ```
+
+```bash
+git config --file ~/git/personal/.gitconfig user.name "personal name"
+git config --file ~/git/personal/.gitconfig user.email "personal github-no-reply email"
+```
+

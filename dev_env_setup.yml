@@ -214,6 +214,34 @@
       args:
         creates: ~/.local/share/fnm/node-versions/
 
+    - name: Create folder structure in home directory
+      file:
+        path: "{{ ansible_env.HOME }}/git/{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - personal
+        - work
+        - oss
+
+    - name: Git config includeIf.work
+      community.general.git_config:
+        scope: global
+        name: includeIf.gitdir:~/git/work/.path
+        value: ~/git/work/.gitconfig
+
+    - name: Git config includeIf.personal
+      community.general.git_config:
+        scope: global
+        name: includeIf.gitdir:~/git/personal/.path
+        value: ~/git/personal/.gitconfig
+
+    - name: Git config includeIf.oss
+      community.general.git_config:
+        scope: global
+        name: includeIf.gitdir:~/git/oss/.path
+        value: ~/git/oss/.gitconfig
+
     - name: Git config core.editor
       community.general.git_config:
         scope: global
@@ -286,14 +314,16 @@
         name: push.useForceIfIncludes
         value: true
 
-    - name: Git config gpg.format
+    - name: Git config gpg.format (work)
       community.general.git_config:
-        scope: global
+        scope: file
+        file: ~/git/work/.gitconfig
         name: gpg.format
         value: ssh
 
-    - name: Git config commit.gpgsign
+    - name: Git config commit.gpgsign (work)
       community.general.git_config:
-        scope: global
+        scope: file
+        file: ~/git/work/.gitconfig
         name: commit.gpgsign
         value: true
