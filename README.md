@@ -1,3 +1,27 @@
+## Install Ansible
+
+### macOS (with brew)
+Install brew
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+Install ansible unsing brew
+```bash
+brew install ansible
+```
+
+### Ubuntu
+Add ansible repository
+```bash
+sudo apt-add-repository ppa:ansible/ansible
+sudo apt update
+```
+
+Install ansible using apt
+```bash
+sudo apt install ansible
+```
 
 ## Run playbook
 ```bash
