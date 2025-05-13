@@ -51,3 +51,9 @@ git config --file ~/git/personal/.gitconfig user.name "personal name"
 git config --file ~/git/personal/.gitconfig user.email "personal github-no-reply email"
 ```
 
+## Setup VSCode
+- Sign in for GitHub Copilot
+
+## Setup Font
+Install FiraCode Nerd Font Mono (not macOS): httpts://github.com/ryanoasis/nerd-fonts
+Manuall update terminal font to FiraCode Nerd Font Mono Reg 11
