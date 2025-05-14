@@ -31,12 +31,16 @@
       - openjdk-17-source
       - docker.io
       - fd-find
+      - dotnet-sdk-8.0
+      - dotnet-sdk-9.0
     dev_packages_mac:
       - python
       - openjdk@17
       - docker # Just docker CLI, no runtime
       - colima # Alternative to Docker Desktop due to licensing issues
       - fd
+      - dotnet-sdk@8
+      - dotnet-sdk@9
       - fnm
       - font-fira-code-nerd-font
 
@@ -48,7 +52,13 @@
       args:
         executable: /bin/bash
 
-    - name: Install common packages on Linux
+    - name: Add dotnet repository (Debian only)
+      when: ansible_os_family == "Debian"
+      become: true
+      apt_repository:
+        repo: ppa:dotnet/backports
+
+    - name: Install packages on Debian
       when: ansible_os_family == "Debian"
       become: true
       package:
