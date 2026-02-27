@@ -41,8 +41,8 @@
       - docker # Just docker CLI, no runtime
       - colima # Alternative to Docker Desktop due to licensing issues
       - fd
-      - dotnet-sdk@8
-      - dotnet-sdk@9
+      - dotnet@8
+      - dotnet@9
       - fnm
       - font-fira-code-nerd-font
 
