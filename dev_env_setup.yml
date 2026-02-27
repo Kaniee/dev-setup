@@ -3,6 +3,8 @@
   hosts: localhost
   connection: local
   gather_facts: true
+  vars_files:
+    - vars.yml
   vars:
     the_user: "{{ ansible_user_id }}"
     dev_packages_common:
@@ -337,3 +339,58 @@
         file: ~/git/work/.gitconfig
         name: commit.gpgsign
         value: true
+
+    - name: Git config user.email (work)
+      community.general.git_config:
+        scope: file
+        file: ~/git/work/.gitconfig
+        name: user.email
+        value: "{{ work_git_email }}"
+
+    - name: Git config user.name (work)
+      community.general.git_config:
+        scope: file
+        file: ~/git/work/.gitconfig
+        name: user.name
+        value: "{{ work_git_user }}"
+
+    - name: Git config credential.helper (work)
+      community.general.git_config:
+        scope: file
+        file: ~/git/work/.gitconfig
+        name: credential.helper
+        value: "!{{ lookup('pipe', 'which gh') }} auth git-credential"
+
+    - name: Git config GitHub credential.helper (work)
+      community.general.git_config:
+        name: credential.https://github.com.helper
+        value: "{{ item }}"
+        scope: file
+        file: ~/git/work/.gitconfig
+        add_mode: add
+      loop:
+        - ""
+        - "!GH_TOKEN=$(gh auth token --user {{ work_github_user }}) {{ lookup('pipe', 'which gh') }} auth git-credential"
+
+    - name: Git config Gist GitHub credential.helper (work)
+      community.general.git_config:
+        name: credential.https://gist.github.com.helper
+        value: "{{ item }}"
+        scope: file
+        file: ~/git/work/.gitconfig
+        add_mode: add
+      loop:
+        - ""
+        - "!GH_TOKEN=$(gh auth token --user {{ work_github_user }}) {{ lookup('pipe', 'which gh') }} auth git-credential"
+
+    - name: Ensure ~/.config/git directory exists
+      file:
+        path: ~/.config/git
+        state: directory
+        mode: "0755"
+
+    - name: Add global gitignore (macOS only)
+      when: ansible_os_family == "Darwin"
+      copy:
+        src: macOS.gitignore
+        dest: ~/.config/git/ignore

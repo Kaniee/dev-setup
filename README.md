@@ -37,7 +37,7 @@ GitHub documentation on [Adding a new SSH key to your account](https://docs.gith
 ```bash
 ssh-keygen -t ed25519 -C ""
 gh ssh-key add ~/.ssh/id_ed25519.pub --type signing --title ""
-git config --global user.signingkey ~/.ssh/id_ed25519.pub
+git config --file ~/git/work/.gitconfig user.signingkey ~/.ssh/id_ed25519.pub
 ```
 
 ## Set up git user
