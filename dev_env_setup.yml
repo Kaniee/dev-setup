@@ -116,11 +116,18 @@
         groups: docker
         append: yes
 
+    - name: Check colima status (macOS only)
+      when: ansible_facts["os_family"] == "Darwin"
+      command: colima status
+      register: colima_status
+      changed_when: false
+      failed_when: false
+
     - name: Start colima (macOS only)
-      when: ansible_os_family == "Darwin"
-      community.general.homebrew_services:
-        name: colima
-        state: present
+      when:
+        - ansible_facts["os_family"] == "Darwin"
+        - colima_status.rc != 0
+      command: colima start
 
     - name: Set up bat symlink (Debian only)
       when: ansible_os_family == "Debian"
