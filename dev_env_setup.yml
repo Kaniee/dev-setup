@@ -419,6 +419,92 @@
         - ""
         - "!GH_TOKEN=$(gh auth token --user {{ work_github_user }}) {{ lookup('pipe', 'which gh') }} auth git-credential"
 
+    - name: Git config user.email (personal)
+      community.general.git_config:
+        scope: file
+        file: ~/git/personal/.gitconfig
+        name: user.email
+        value: "{{ personal_git_email }}"
+
+    - name: Git config user.name (personal)
+      community.general.git_config:
+        scope: file
+        file: ~/git/personal/.gitconfig
+        name: user.name
+        value: "{{ personal_git_user }}"
+
+    - name: Git config credential.helper (personal)
+      community.general.git_config:
+        scope: file
+        file: ~/git/personal/.gitconfig
+        name: credential.helper
+        value: "!{{ lookup('pipe', 'which gh') }} auth git-credential"
+
+    - name: Git config GitHub credential.helper (personal)
+      community.general.git_config:
+        name: credential.https://github.com.helper
+        value: "{{ item }}"
+        scope: file
+        file: ~/git/personal/.gitconfig
+        add_mode: add
+      loop:
+        - ""
+        - "!GH_TOKEN=$(gh auth token --user {{ personal_github_user }}) {{ lookup('pipe', 'which gh') }} auth git-credential"
+
+    - name: Git config Gist GitHub credential.helper (personal)
+      community.general.git_config:
+        name: credential.https://gist.github.com.helper
+        value: "{{ item }}"
+        scope: file
+        file: ~/git/personal/.gitconfig
+        add_mode: add
+      loop:
+        - ""
+        - "!GH_TOKEN=$(gh auth token --user {{ personal_github_user }}) {{ lookup('pipe', 'which gh') }} auth git-credential"
+
+    - name: Git config user.email (oss)
+      community.general.git_config:
+        scope: file
+        file: ~/git/oss/.gitconfig
+        name: user.email
+        value: "{{ oss_git_email }}"
+
+    - name: Git config user.name (oss)
+      community.general.git_config:
+        scope: file
+        file: ~/git/oss/.gitconfig
+        name: user.name
+        value: "{{ oss_git_user }}"
+
+    - name: Git config credential.helper (oss)
+      community.general.git_config:
+        scope: file
+        file: ~/git/oss/.gitconfig
+        name: credential.helper
+        value: "!{{ lookup('pipe', 'which gh') }} auth git-credential"
+
+    - name: Git config GitHub credential.helper (oss)
+      community.general.git_config:
+        name: credential.https://github.com.helper
+        value: "{{ item }}"
+        scope: file
+        file: ~/git/oss/.gitconfig
+        add_mode: add
+      loop:
+        - ""
+        - "!GH_TOKEN=$(gh auth token --user {{ oss_github_user }}) {{ lookup('pipe', 'which gh') }} auth git-credential"
+
+    - name: Git config Gist GitHub credential.helper (oss)
+      community.general.git_config:
+        name: credential.https://gist.github.com.helper
+        value: "{{ item }}"
+        scope: file
+        file: ~/git/oss/.gitconfig
+        add_mode: add
+      loop:
+        - ""
+        - "!GH_TOKEN=$(gh auth token --user {{ oss_github_user }}) {{ lookup('pipe', 'which gh') }} auth git-credential"
+
     - name: Ensure ~/.config/git directory exists
       file:
         path: ~/.config/git
