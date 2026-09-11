@@ -12,3 +12,10 @@ personal_github_user: ""
 oss_git_user: ""
 oss_git_email: ""
 oss_github_user: ""
+
+# Logseq backup (macOS only)
+logseq_graph_dir: ""
+logseq_backup_dir: ""
+logseq_backup_keep: 30
+logseq_backup_hour: 12
+logseq_backup_minute: 0

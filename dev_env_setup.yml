@@ -6,7 +6,7 @@
   vars_files:
     - vars.yml
   vars:
-    the_user: "{{ ansible_user_id }}"
+    the_user: "{{ ansible_facts['user_id'] }}"
     dev_packages_common:
       - git
       - curl
@@ -65,20 +65,25 @@
 
   tasks:
     - name: Ensure Homebrew is installed (macOS only)
-      when: ansible_os_family == "Darwin"
+      when: ansible_facts["os_family"] == "Darwin"
       shell: |
         which brew || /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
       args:
         executable: /bin/bash
 
     - name: Add dotnet repository (Debian only)
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
       become: true
-      apt_repository:
-        repo: ppa:dotnet/backports
+      deb822_repository:
+        name: dotnet-backports
+        types: deb
+        uris: https://ppa.launchpadcontent.net/dotnet/backports/ubuntu
+        suites: "{{ ansible_facts['distribution_release'] }}"
+        components: main
+        signed_by: https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x45A3F127159BE9E5017811C62125B164E8E5D3FA
 
     - name: Add homebrew taps (macOS only)
-      when: ansible_os_family == "Darwin"
+      when: ansible_facts["os_family"] == "Darwin"
       community.general.homebrew_tap:
         name: "{{ item }}"
         state: present
@@ -90,26 +95,26 @@
         - microsoft/mssql-release
 
     - name: Install packages on Debian
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
       become: true
       package:
         name: "{{ dev_packages_common + dev_packages_linux }}"
         state: present
 
     - name: Install packages on macOS
-      when: ansible_os_family == "Darwin"
+      when: ansible_facts["os_family"] == "Darwin"
       homebrew:
         name: "{{ dev_packages_common + dev_packages_mac }}"
         state: present
 
     - name: Install fnm (Debian only)
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
       shell: curl -fsSL https://fnm.vercel.app/install | bash
       args:
         creates: ~/.local/share/fnm/fnm
 
     - name: Add user to docker group (Debian only)
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
       become: true
       user:
         name: "{{ the_user }}"
@@ -130,24 +135,24 @@
       command: colima start
 
     - name: Set up bat symlink (Debian only)
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
       shell: ln -s /usr/bin/batcat ~/.local/bin/bat
       args:
         chdir: ~/.local/bin
         creates: ~/.local/bin/bat
 
     - name: Set up fd symlink (Debian only)
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
       shell: ln -s /usr/bin/fdfind ~/.local/bin/fd
       args:
         chdir: ~/.local/bin
         creates: ~/.local/bin/fd
 
     - name: Ensure ~/.local/bin in path (Debian only)
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
       lineinfile:
         path: ~/.bashrc
-        line: export PATH="$PATH:{{ ansible_env.HOME }}/.local/bin"
+        line: export PATH="$PATH:{{ ansible_facts['env'].HOME }}/.local/bin"
 
     - name: Set fish as default shell
       become: true
@@ -162,13 +167,13 @@
         creates: ~/.config/fish/config.fish
 
     - name: Ensure ~/.local/bin in fish path (Debian only)
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
       lineinfile:
         path: ~/.config/fish/config.fish
-        line: set PATH $PATH {{ ansible_env.HOME }}/.local/bin
+        line: set PATH $PATH {{ ansible_facts['env'].HOME }}/.local/bin
 
     - name: Add brew config to fish
-      when: ansible_os_family == "Darwin"
+      when: ansible_facts["os_family"] == "Darwin"
       lineinfile:
         create: true
         path: ~/.config/fish/conf.d/brew.fish
@@ -264,7 +269,7 @@
 
     - name: Create folder structure in home directory
       file:
-        path: "{{ ansible_env.HOME }}/git/{{ item }}"
+        path: "{{ ansible_facts['env'].HOME }}/git/{{ item }}"
         state: directory
         mode: "0755"
       loop:
@@ -512,7 +517,7 @@
         mode: "0755"
 
     - name: Add global gitignore (macOS only)
-      when: ansible_os_family == "Darwin"
+      when: ansible_facts["os_family"] == "Darwin"
       copy:
         src: macOS.gitignore
         dest: ~/.config/git/ignore
